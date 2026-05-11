@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ doc.title }} · CancerLSI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <a href="{{ url_for('index') }}" class="back-link">← Volver a búsqueda</a>
+  <h1 class="page-title">{{ doc.title }}</h1>
+</div>
+
+<div class="detail-grid">
+  <!-- Info del documento -->
+  <div class="card detail-card">
+    <h2 class="card-title">Información del documento</h2>
+    <dl class="info-list">
+      <dt>ID</dt><dd>{{ doc.id }}</dd>
+      <dt>Fuente</dt><dd>{{ doc.source }}</dd>
+      <dt>Tipo</dt><dd><span class="tag tag-found">{{ doc.type }}</span></dd>
+      <dt>Idioma</dt><dd>{{ doc.language }}</dd>
+      <dt>URL original</dt>
+      <dd><a href="{{ doc.url }}" target="_blank" class="btn-link">Visitar fuente →</a></dd>
+    </dl>
+  </div>
+
+  <!-- Términos más frecuentes -->
+  <div class="card terms-freq-card">
+    <h2 class="card-title">Términos más frecuentes</h2>
+    {% if terms %}
+    <div class="terms-cloud">
+      {% for t in terms %}
+      <div class="term-bar">
+        <span class="term-name">{{ t.term_name }}</span>
+        <div class="bar-wrap">
+          <div class="bar-fill" style="width: {{ [t.frequency * 40, 100]|min }}%"></div>
+        </div>
+        <span class="term-freq">{{ "%.3f"|format(t.frequency) }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+      <p class="empty-msg">No hay términos registrados para este documento.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Documentos similares LSI -->
+{% if similar %}
+<div class="card">
+  <h2 class="card-title">Documentos similares (LSI)</h2>
+  <div class="table-wrap">
+    <table class="results-table">
+      <thead>
+        <tr><th>#</th><th>Documento</th><th>ID</th><th>Similitud LSI</th><th>Acciones</th></tr>
+      </thead>
+      <tbody>
+        {% for s in similar %}
+        <tr>
+          <td class="rank-cell">{{ loop.index }}</td>
+          <td class="title-cell">{{ s.title }}</td>
+          <td>{{ s.id }}</td>
+          <td class="score-cell">{{ "%.4f"|format(s.sim) }}</td>
+          <td class="actions-cell">
+            <a href="{{ url_for('document_detail', doc_id=s.id) }}" class="btn-detail">Ver</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
