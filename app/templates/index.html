@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Búsqueda por Síntomas · CancerLSI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Recuperación Documental</h1>
+  <p class="page-subtitle">Sistema de similitud textual basado en LSI/SVD</p>
+</div>
+
+<!-- Aviso médico -->
+<div class="alert-medical">
+  <span class="alert-icon">⚕</span>
+  <p>Este sistema <strong>no realiza diagnósticos médicos</strong>. Solo recupera documentos
+     relacionados por similitud textual con los síntomas descritos. Los resultados son
+     de carácter estrictamente informativo y académico.</p>
+</div>
+
+<!-- Formulario de búsqueda -->
+<div class="card search-card">
+  <h2 class="card-title">Ingresa tus síntomas</h2>
+  <form method="POST" action="{{ url_for('index') }}">
+    <div class="form-group">
+      <label class="form-label">Describe los síntomas</label>
+      <textarea name="symptoms" class="form-textarea" rows="3"
+        placeholder="Ejemplo: tos persistente dolor pecho dificultad respirar perdida peso">{{ query_text }}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Método de similitud</label>
+      <div class="method-selector">
+        {% for val, label in [('cosine','Similitud Coseno'), ('jaccard','Jaccard'), ('manhattan','Manhattan'), ('lsi','LSI / SVD')] %}
+        <label class="method-option {% if method == val %}selected{% endif %}">
+          <input type="radio" name="method" value="{{ val }}" {% if method == val %}checked{% endif %}>
+          {{ label }}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    <button type="submit" class="btn-primary">Buscar documentos</button>
+  </form>
+</div>
+
+<!-- Términos detectados -->
+{% if detected_terms %}
+<div class="card terms-card">
+  <span class="terms-label">Términos detectados:</span>
+  {% for t in detected_terms %}
+    <span class="tag tag-found">{{ t }}</span>
+  {% endfor %}
+  {% if missing_terms %}
+    {% for t in missing_terms %}
+      <span class="tag tag-missing">{{ t }}</span>
+    {% endfor %}
+  {% endif %}
+</div>
+{% endif %}
+
+{% if warning %}
+<div class="alert-warning">⚠ {{ warning }}</div>
+{% endif %}
+
+<!-- Resultados -->
+{% if results %}
+<div class="card results-card">
+  <h2 class="card-title">Documentos más relacionados
+    <span class="badge">{{ results|length }} resultado(s)</span>
+  </h2>
+  <div class="table-wrap">
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Documento</th>
+          <th>ID</th>
+          <th>Métrica</th>
+          <th>Valor</th>
+          <th>Fuente</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in results %}
+        <tr>
+          <td class="rank-cell">{{ loop.index }}</td>
+          <td class="title-cell">{{ r.title }}</td>
+          <td>{{ r.id }}</td>
+          <td><span class="method-badge method-{{ method }}">{{ method|upper }}</span></td>
+          <td class="score-cell">
+            {% if r.score is defined %}
+              {{ "%.4f"|format(r.score) }}
+            {% else %}—{% endif %}
+          </td>
+          <td class="source-cell">{{ r.source }}</td>
+          <td class="actions-cell">
+            <a href="{{ r.url }}" target="_blank" class="btn-link">Ver fuente</a>
+            <a href="{{ url_for('document_detail', doc_id=r.id) }}" class="btn-detail">Detalle</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% elif request.method == 'POST' and detected_terms %}
+<div class="empty-state">
+  <span class="empty-icon">◎</span>
+  <p>No se encontraron documentos relacionados con los términos ingresados.</p>
+</div>
+{% endif %}
+{% endblock %}

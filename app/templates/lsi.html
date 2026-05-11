@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}LSI / SVD · CancerLSI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Modelo LSI / SVD</h1>
+  <p class="page-subtitle">Análisis semántico latente de la colección documental</p>
+</div>
+
+<!-- Info del modelo -->
+{% if model %}
+<div class="card model-info-card">
+  <h2 class="card-title">Último modelo cargado</h2>
+  <dl class="info-list info-inline">
+  <dt>Componentes (k)</dt>
+  <dd>{{ model.k_components }}</dd>
+
+  <dt>Varianza explicada</dt>
+  <dd>
+    {% if model.total_variance is not none %}
+      {{ "%.2f"|format(model.total_variance * 100) }}%
+    {% else %}
+      No registrada
+    {% endif %}
+  </dd>
+
+  <dt>Documentos</dt>
+  <dd>{{ model.n_documents }}</dd>
+
+  <dt>Términos</dt>
+  <dd>{{ model.n_terms }}</dd>
+</dl>
+</div>
+{% else %}
+<div class="alert-warning">⚠ No se encontró ningún modelo LSI en la base de datos.</div>
+{% endif %}
+
+<!-- Componentes y términos -->
+{% if components %}
+<div class="card">
+  <h2 class="card-title">Términos por componente latente</h2>
+  <div class="components-grid">
+    {% for comp_num, terms in components.items() %}
+    <div class="component-block">
+      <h3 class="component-title">Componente {{ comp_num }}</h3>
+      <ul class="component-terms">
+        {% for t in terms %}
+        <li>
+          <span class="term-name">{{ t.term }}</span>
+          <span class="term-weight {% if t.weight > 0 %}pos{% else %}neg{% endif %}">
+            {{ "%.4f"|format(t.weight) }}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Similitudes documento-documento -->
+{% if similarities %}
+<div class="card">
+  <h2 class="card-title">Similitudes entre documentos (espacio LSI)
+    <span class="badge">{{ similarities|length }} pares</span>
+  </h2>
+  <div class="table-wrap">
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>Documento 1</th>
+          <th>Documento 2</th>
+          <th>Similitud Coseno LSI</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in similarities %}
+        <tr>
+          <td class="title-cell">{{ s.title_1 }}</td>
+          <td class="title-cell">{{ s.title_2 }}</td>
+          <td class="score-cell">
+            <div class="sim-bar-wrap">
+              <div class="sim-bar" style="width: {{ (s.cosine_similarity_lsi * 100)|round }}%"></div>
+              <span>{{ "%.4f"|format(s.cosine_similarity_lsi) }}</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
